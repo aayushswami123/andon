@@ -54,6 +54,6 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   per minute by verdict, used by `/api/stats`.
   *Done when:* `/api/stats` reads from the aggregate.
 
-- [ ] **13. README.** 40 lines or fewer: what it is, the results table,
+- [x] **13. README.** 40 lines or fewer: what it is, the results table,
   how to run, how it was built (the factory). No more.
   *Done when:* the file exists.
