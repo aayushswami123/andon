@@ -47,7 +47,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
 - [x] **10. Sentry.** Init in the app and in `lib/jev.ts` error paths.
   *Done when:* a forced error appears in Sentry.
 
-- [ ] **11. (cut) Escalation.** SPEC "Escalation" and rule 4.
+- [x] **11. (cut) Escalation.** SPEC "Escalation" and rule 4.
   *Done when:* an unsure case shows `escalated` on the board.
 
 - [ ] **12. (cut) Stats from Tiger Data.** A continuous aggregate for checks

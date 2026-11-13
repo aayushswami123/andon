@@ -16,4 +16,5 @@ export type Answers = Partial<Record<QuestionId, Answer>>;
 
 export type Verdict = "pass" | "rework" | "stop";
 
-export type Decision = { verdict: Verdict; reason: string; firedBy: string | null };
+// `escalate` means rule 4 fired: the gate must ask the large model before trusting `verdict`.
+export type Decision = { verdict: Verdict; reason: string; firedBy: string | null; escalate?: boolean };

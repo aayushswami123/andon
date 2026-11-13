@@ -1,5 +1,14 @@
 // Scores at or above `stop` stop the line; between `rework` and `stop` ask for rework.
-export const T = { rework: 0.35, stop: 0.75, minConfidence: 0.6 };
+// A low-confidence score inside the `unsure` band goes to a large model instead (rule 4).
+export const T = { rework: 0.35, stop: 0.75, minConfidence: 0.6, unsure: { low: 0.25, high: 0.75 } };
+
+// Escalation model, reached through OpenRouter with the same key as Jev. The only large-model call.
+export const ESCALATE = {
+  url: "https://openrouter.ai/api/v1/chat/completions",
+  model: "anthropic/claude-opus-5-5",
+  timeoutMs: 20_000,
+  maxTokens: 200,
+};
 
 // Board: how often it polls and how many lamp tiles stay on the line.
 export const BOARD = { pollMs: 1000, keepTiles: 24 };

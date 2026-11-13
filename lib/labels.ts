@@ -13,6 +13,7 @@ export const WORDS = {
   why: "Why",
   facts: "Facts that fired",
   note: "Note",
+  escalated: "escalated",
 };
 
 export const VERDICT_WORD: Record<Verdict, string> = {

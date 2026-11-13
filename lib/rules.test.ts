@@ -45,6 +45,22 @@ describe("decide", () => {
     expect(result.firedBy).toBe("error_hidden");
   });
 
+  it("rule 4: a low-confidence answer in the unsure band escalates", () => {
+    const result = decide(facts(), {
+      special_case: { probability: 0.3, confidence: 0.4 },
+      out_of_scope: { probability: 0.1, confidence: 0.9 },
+    });
+    expect(result.verdict).toBe("rework");
+    expect(result.escalate).toBe(true);
+    expect(result.firedBy).toBe("special_case");
+  });
+
+  it("rule 4 does not fire when confidence is high", () => {
+    const result = decide(facts(), { special_case: { probability: 0.3, confidence: 0.9 } });
+    expect(result.verdict).toBe("pass");
+    expect(result.escalate).toBeUndefined();
+  });
+
   it("rule 5: low answers pass", () => {
     const result = decide(facts(), {
       special_case: { probability: 0.1, confidence: 0.9 },

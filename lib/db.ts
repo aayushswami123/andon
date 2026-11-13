@@ -42,6 +42,7 @@ type NewEvent = {
   verdict: Verdict;
   reason: string;
   firedBy: string | null;
+  escalated: boolean;
   latencyMs: number;
   costUsd: number;
 };
@@ -64,9 +65,9 @@ const EVENT_COLUMNS = `id::int as id, ts, run_id, files, verdict, reason, fired_
 
 export async function insertEvent(e: NewEvent): Promise<number> {
   const rows = await sql()<{ id: number }[]>`
-    insert into events (run_id, files, diff, facts, answers, verdict, reason, fired_by, latency_ms, cost_usd)
+    insert into events (run_id, files, diff, facts, answers, verdict, reason, fired_by, escalated, latency_ms, cost_usd)
     values (${e.runId}, ${e.files}, ${e.diff}, ${sql().json(e.facts)}, ${sql().json(e.answers)},
-            ${e.verdict}, ${e.reason}, ${e.firedBy}, ${e.latencyMs}, ${e.costUsd})
+            ${e.verdict}, ${e.reason}, ${e.firedBy}, ${e.escalated}, ${e.latencyMs}, ${e.costUsd})
     returning id`;
   return Number(rows[0]!.id);
 }

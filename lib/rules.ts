@@ -13,6 +13,22 @@ const REASONS: Record<QuestionId, string> = {
 
 const PASS_REASON = "No problems found.";
 const CONFIG_REASON = "A config file was changed to turn off a check.";
+const UNSURE_REASON = "The check was unsure, so a larger model was asked.";
+
+// Rule 4: a low-confidence score inside the unsure band. Lowest confidence wins when several qualify.
+function unsure(answers: Answers): QuestionId | null {
+  let best: QuestionId | null = null;
+  let bestC = Infinity;
+  for (const [id, answer] of Object.entries(answers) as [QuestionId, Answers[QuestionId]][]) {
+    if (!answer) continue;
+    const { probability: p, confidence: c } = answer;
+    if (c < T.minConfidence && p >= T.unsure.low && p <= T.unsure.high && c < bestC) {
+      best = id;
+      bestC = c;
+    }
+  }
+  return best;
+}
 
 function highest(answers: Answers, min: number, max: number): QuestionId | null {
   let best: QuestionId | null = null;
@@ -37,5 +53,8 @@ export function decide(facts: Facts, answers: Answers): Decision {
   if (stopId) return { verdict: "stop", reason: REASONS[stopId], firedBy: stopId };
   const reworkId = highest(answers, T.rework, T.stop);
   if (reworkId) return { verdict: "rework", reason: REASONS[reworkId], firedBy: reworkId };
+  // Rework is the safe default until the large model answers; never pass by default.
+  const unsureId = unsure(answers);
+  if (unsureId) return { verdict: "rework", reason: UNSURE_REASON, firedBy: unsureId, escalate: true };
   return { verdict: "pass", reason: PASS_REASON, firedBy: null };
 }

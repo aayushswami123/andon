@@ -33,7 +33,14 @@ export function Why({ event }: { event: EventRow | null }) {
       </div>
       {event && (
         <div className="flex flex-col gap-8 px-8 py-6">
-          <p className="text-[20px]">{event.reason}</p>
+          <p className="text-[20px]">
+            {event.reason}
+            {event.escalated && (
+              <span className="ml-3 border border-paper-dim px-2 py-0.5 font-cond text-[14px] uppercase text-paper-dim">
+                {WORDS.escalated}
+              </span>
+            )}
+          </p>
           <ul className="flex flex-col gap-4">
             {asked.map((id) => {
               const a = event.answers[id]!;

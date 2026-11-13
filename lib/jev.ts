@@ -17,7 +17,7 @@ export class JevError extends Error {
   }
 }
 
-const QUESTIONS: Record<QuestionId, string> = {
+export const QUESTIONS: Record<QuestionId, string> = {
   test_weakened:
     "Does this change make a test check less than before, with no reason for that in the spec?",
   fake_test: "Does a new or changed test fail to check the behavior the spec asks for?",
