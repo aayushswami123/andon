@@ -17,7 +17,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   (skip rule 4), with `lib/rules.test.ts`: one case per rule.
   *Done when:* `npx vitest run lib/rules.test.ts` passes.
 
-- [ ] **4. Judgments.** `lib/jev.ts` and `lib/jev.mock.ts` per SPEC Layer 2.
+- [x] **4. Judgments.** `lib/jev.ts` and `lib/jev.mock.ts` per SPEC Layer 2.
   Read the TypeSafe quickstart first.
   *Done when:* `tsc` passes and a one-off script prints real answers for one
   sample diff with latency. Delete the one-off script after.

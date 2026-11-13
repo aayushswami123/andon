@@ -14,7 +14,7 @@ export type Facts = {
 
 type FileDiff = { path: string; added: string[]; removed: string[]; body: string[] };
 
-const TEST_PATH = /(\.(test|spec)\.[^/]+$)|((^|\/)test_[^/]*\.py$)|((^|\/)(__tests__|tests)\/)/;
+export const TEST_PATH = /(\.(test|spec)\.[^/]+$)|((^|\/)test_[^/]*\.py$)|((^|\/)(__tests__|tests)\/)/;
 const CONFIG_PATH = /(\.github\/workflows\/)|(tsconfig[^/]*\.json$)|((eslint|vitest|jest)\.config\.)|(\.eslintrc)/;
 const ASSERT = /expect\(|\bassert\b/;
 const STRICT_MATCHER = /\.(toBe|toEqual|toStrictEqual)\(|assertEqual\(/;
