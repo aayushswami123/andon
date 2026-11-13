@@ -1,4 +1,4 @@
-// Posts a scorecard case to /api/gate as if an agent made the change.
+// Posts a scorecard or demo case to /api/gate as if an agent made the change.
 // Usage: node scripts/replay.mjs <case-id>   (ANDON_URL overrides http://localhost:3000)
 import { readFile } from "node:fs/promises";
 
@@ -9,13 +9,23 @@ if (!id) {
 }
 
 const base = process.env.ANDON_URL ?? "http://localhost:3000";
-const path = new URL(`../scorecard/cases/${id}.json`, import.meta.url);
+// demo/cases holds the staged demo steps; they are not part of the scorecard.
+const dirs = ["scorecard/cases", "demo/cases"];
 
 let kase;
-try {
-  kase = JSON.parse(await readFile(path, "utf8"));
-} catch (err) {
-  console.error(`Could not read case ${id}: ${err.message}`);
+for (const dir of dirs) {
+  try {
+    kase = JSON.parse(await readFile(new URL(`../${dir}/${id}.json`, import.meta.url), "utf8"));
+    break;
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      console.error(`Could not read case ${id}: ${err.message}`);
+      process.exit(1);
+    }
+  }
+}
+if (!kase) {
+  console.error(`No case ${id} in ${dirs.join(" or ")}`);
   process.exit(1);
 }
 
