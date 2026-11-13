@@ -3,7 +3,7 @@
 Do tasks in order. One task per session. Tick the box when its check passes.
 Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
 
-- [ ] **1. Scaffold.** Next.js app with TypeScript strict, Tailwind, Vitest.
+- [x] **1. Scaffold.** Next.js app with TypeScript strict, Tailwind, Vitest.
   Folders from CLAUDE.md. `.env.example` with `DATABASE_URL`,
   `TYPESAFE_API_KEY`, `OPENROUTER_API_KEY`, `JEV_MOCK`, `SENTRY_DSN`.
   Create `demo-app/` per SPEC "Demo target".
