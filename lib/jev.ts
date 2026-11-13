@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { TypeSafeClient } from "@typesafe-ai/sdk";
 import { JEV } from "./config";
 import { TEST_PATH, type Facts } from "./facts";
@@ -156,6 +157,8 @@ export async function judge(state: JudgeState, questionIds: QuestionId[]): Promi
         : Promise.reject(new JevError("No TYPESAFE_API_KEY or OPENROUTER_API_KEY set"));
     return { ...result, latencyMs: Math.round(performance.now() - start) };
   } catch (err) {
+    // SPEC Layer 2: on timeout or error, report to Sentry, then let the gate return `rework`.
+    Sentry.captureException(err, { extra: { questionIds, model: JEV.model } });
     if (err instanceof JevError) throw err;
     throw new JevError("Check could not run", { cause: err });
   }

@@ -44,7 +44,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   first. From this task on, Andon gates its own repo.
   *Done when:* an edit in `demo-app/` shows up on the board.
 
-- [ ] **10. Sentry.** Init in the app and in `lib/jev.ts` error paths.
+- [x] **10. Sentry.** Init in the app and in `lib/jev.ts` error paths.
   *Done when:* a forced error appears in Sentry.
 
 - [ ] **11. (cut) Escalation.** SPEC "Escalation" and rule 4.

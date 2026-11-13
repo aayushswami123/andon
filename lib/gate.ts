@@ -30,8 +30,7 @@ export async function runGate(input: GateInput): Promise<GateResult> {
     decision = decide(facts, answers);
   } catch (err) {
     if (!(err instanceof JevError)) throw err;
-    // Sentry wiring comes in PLAN task 10; until then this is the only trace of a failed check.
-    console.error("[andon] judge failed", err);
+    // Already reported to Sentry inside judge(); here it only becomes a verdict.
     decision = { verdict: "rework", reason: CHECK_FAILED_REASON, firedBy: "jev_error" };
   }
 

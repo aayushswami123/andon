@@ -1,7 +1,7 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -14,4 +14,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// No org/project/auth token: errors are reported at runtime, source maps are not uploaded.
+export default withSentryConfig(nextConfig, { silent: true, telemetry: false });
