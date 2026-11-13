@@ -22,7 +22,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   *Done when:* `tsc` passes and a one-off script prints real answers for one
   sample diff with latency. Delete the one-off script after.
 
-- [ ] **5. Gate and data.** `lib/db.ts`, `db/schema.sql`, `lib/gate.ts`, and
+- [x] **5. Gate and data.** `lib/db.ts`, `db/schema.sql`, `lib/gate.ts`, and
   all routes in SPEC "API".
   *Done when:* `curl` to `/api/gate` with a sample body returns a verdict and
   a row appears in `events`.
