@@ -13,7 +13,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   `lib/facts.test.ts`: one true case and one false case per key.
   *Done when:* `npx vitest run lib/facts.test.ts` passes.
 
-- [ ] **3. Rules.** `lib/config.ts` and `lib/rules.ts` per SPEC Layer 3
+- [x] **3. Rules.** `lib/config.ts` and `lib/rules.ts` per SPEC Layer 3
   (skip rule 4), with `lib/rules.test.ts`: one case per rule.
   *Done when:* `npx vitest run lib/rules.test.ts` passes.
 
