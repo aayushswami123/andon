@@ -3,11 +3,14 @@
 export const T = { rework: 0.35, stop: 0.75, minConfidence: 0.6, unsure: { low: 0.25, high: 0.75 } };
 
 // Escalation model, reached through OpenRouter with the same key as Jev. The only large-model call.
+// Opus 5.5 always reasons on this endpoint and reasoning counts against maxTokens, so the budget
+// must leave room for the one-line answer; at 200 the answer was cut off every time.
 export const ESCALATE = {
   url: "https://openrouter.ai/api/v1/chat/completions",
   model: "anthropic/claude-opus-5-5",
-  timeoutMs: 20_000,
-  maxTokens: 200,
+  timeoutMs: 30_000,
+  maxTokens: 1000,
+  reasoningEffort: "minimal",
 };
 
 // Board: how often it polls and how many lamp tiles stay on the line.

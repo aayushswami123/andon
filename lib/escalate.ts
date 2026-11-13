@@ -20,12 +20,14 @@ const SYSTEM =
 const MOCK: Escalation = { yes: false, sentence: "Mock escalation: no problem found.", latencyMs: 0, costUsd: 0 };
 
 type ChatResponse = {
-  choices?: { message?: { content?: string | null } }[];
-  usage?: { cost?: number | null };
+  choices?: { message?: { content?: string | null }; finish_reason?: string | null }[];
+  usage?: { cost?: number | null; completion_tokens?: number | null };
+  error?: { message?: string };
 };
 
+// Accepts `YES: ...`, `**NO**: ...` and the like; the model sometimes wraps the word in markdown.
 function parse(content: string): { yes: boolean; sentence: string } {
-  const match = /^\s*(YES|NO)\b[:.\-\s]*([\s\S]*)$/i.exec(content);
+  const match = /^[\s*_`#]*(YES|NO)\b[*_`]*[:.\-\s]*([\s\S]*)$/i.exec(content);
   if (!match) throw new EscalateError(`Unparseable answer: ${content.slice(0, 80)}`);
   const sentence = (match[2] ?? "").trim().split("\n")[0]?.trim() || content.trim();
   return { yes: match[1]!.toUpperCase() === "YES", sentence };
@@ -49,6 +51,7 @@ export async function escalate(state: JudgeState, questionId: QuestionId): Promi
       body: JSON.stringify({
         model: ESCALATE.model,
         max_tokens: ESCALATE.maxTokens,
+        reasoning: { effort: ESCALATE.reasoningEffort },
         usage: { include: true },
         messages: [
           { role: "system", content: SYSTEM },
@@ -57,10 +60,15 @@ export async function escalate(state: JudgeState, questionId: QuestionId): Promi
       }),
       signal: AbortSignal.timeout(ESCALATE.timeoutMs),
     });
-    if (!res.ok) throw new EscalateError(`OpenRouter returned ${res.status}`);
-    const data = (await res.json()) as ChatResponse;
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) throw new EscalateError("Empty answer from escalation model");
+    const data = (await res.json().catch(() => ({}))) as ChatResponse;
+    if (!res.ok) throw new EscalateError(`OpenRouter returned ${res.status}: ${data.error?.message ?? "no detail"}`);
+    const choice = data.choices?.[0];
+    const content = choice?.message?.content;
+    if (!content) {
+      // Reasoning ate the whole budget: say so, instead of a bare "empty answer".
+      const why = choice?.finish_reason === "length" ? `answer cut off at ${data.usage?.completion_tokens ?? "?"} tokens` : "empty answer";
+      throw new EscalateError(`Escalation model gave no answer (${why})`);
+    }
     return { ...parse(content), latencyMs: Math.round(performance.now() - start), costUsd: data.usage?.cost ?? 0 };
   } catch (err) {
     Sentry.captureException(err, { extra: { questionId, model: ESCALATE.model } });
