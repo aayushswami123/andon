@@ -14,6 +14,7 @@ const { decide } = await import("../lib/rules.ts");
 
 const CASES_DIR = fileURLToPath(new URL("../scorecard/cases/", import.meta.url));
 const RESULTS_PATH = fileURLToPath(new URL("../scorecard/RESULTS.md", import.meta.url));
+const JSON_PATH = fileURLToPath(new URL("../scorecard/results.json", import.meta.url));
 const CONCURRENCY = 4;
 // Layer 1 alone flags a case when any fact that points at a cheat fires. `testFileChanged` is neutral.
 const SUSPICIOUS_FACTS = [
@@ -39,16 +40,18 @@ async function loadCases() {
 }
 
 async function runCase(kase) {
+  const t0 = performance.now();
   const facts = extractFacts(kase.diff);
+  const factsMs = performance.now() - t0;
   const factsFlagged = SUSPICIOUS_FACTS.some((k) => facts[k]);
   try {
     const judgment = await judge({ spec: kase.spec, facts, diff: kase.diff }, questionsFor(facts));
     const decision = decide(facts, judgment.answers);
-    return { ...kase, facts, factsFlagged, ...judgment, ...decision, flagged: decision.verdict !== "pass" };
+    return { ...kase, facts, factsMs, factsFlagged, ...judgment, ...decision, flagged: decision.verdict !== "pass" };
   } catch (err) {
     if (!(err instanceof JevError)) throw err;
     // The gate turns this into `rework`; the eval shows it as an error so it never pads the catch rate.
-    return { ...kase, facts, factsFlagged, verdict: "error", reason: err.message, flagged: false, latencyMs: 0, costUsd: 0 };
+    return { ...kase, facts, factsMs, factsFlagged, verdict: "error", reason: err.message, flagged: false, latencyMs: 0, costUsd: 0 };
   }
 }
 
@@ -125,16 +128,62 @@ function report(name, results) {
   return lines.join("\n");
 }
 
+function topQuestion(r) {
+  const top = Object.entries(r.answers ?? {}).sort((a, b) => b[1].probability - a[1].probability)[0];
+  return top ? { question: top[0], score: top[1].probability } : { question: null, score: null };
+}
+
+// What the board's Scorecard view reads. Only rows with real data: no large-model row until one is measured.
+function summary(name, results) {
+  const cheats = results.filter((r) => r.label === "cheat");
+  const honest = results.filter((r) => r.label === "honest");
+  const ok = results.filter((r) => r.verdict !== "error");
+  const cost = ok.length ? ok.reduce((s, r) => s + r.costUsd, 0) / ok.length : 0;
+  return {
+    split: name,
+    cases: results.length,
+    cheats: cheats.length,
+    honest: honest.length,
+    model: ok[0]?.model ?? "none",
+    run: new Date().toISOString(),
+    rows: [
+      {
+        name: "Andon",
+        caught: cheats.filter((r) => r.flagged).length,
+        falseAlarms: honest.filter((r) => r.flagged).length,
+        medianMs: median(ok.map((r) => r.latencyMs)),
+        costUsd: cost,
+      },
+      {
+        name: "Facts only",
+        caught: cheats.filter((r) => r.factsFlagged).length,
+        falseAlarms: honest.filter((r) => r.factsFlagged).length,
+        medianMs: median(results.map((r) => r.factsMs)),
+        costUsd: 0,
+      },
+    ],
+    misses: [
+      ...cheats.filter((r) => !r.flagged).map((r) => ({ id: r.id, kind: "missed", ...topQuestion(r) })),
+      ...honest.filter((r) => r.flagged).map((r) => ({ id: r.id, kind: "false alarm", ...topQuestion(r) })),
+    ],
+  };
+}
+
 const all = await loadCases();
 const splits = split === "all" ? ["dev", "test"] : [split];
 const sections = [];
+const summaries = {};
 for (const s of splits) {
   console.log(`\n${s} split`);
   const results = await runAll(all.filter((c) => c.split === s));
   sections.push(report(s, results));
+  summaries[s] = summary(s, results);
 }
 
 const doc = ["# Scorecard results", "", "Flagged means `rework` or `stop`. Tuning used the dev split only.", "", ...sections, ""].join("\n");
 console.log("\n" + sections.join("\n\n"));
 await writeFile(RESULTS_PATH, doc);
 console.log(`\nWrote ${RESULTS_PATH}`);
+// The board shows the held-out test split when it was run, else whichever split this was.
+await writeFile(JSON_PATH, JSON.stringify(summaries.test ?? summaries[splits[0]], null, 2) + "\n");
+console.log(`Wrote ${JSON_PATH}`);

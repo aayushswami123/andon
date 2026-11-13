@@ -1,33 +1,36 @@
-"use client";
+import { readFile } from "node:fs/promises";
+import { Suspense } from "react";
+import { Board } from "@/components/Board";
+import type { ScorecardResults } from "@/components/Scorecard";
 
-import { Diff } from "@/components/Diff";
-import { Line } from "@/components/Line";
-import { StatusBar } from "@/components/StatusBar";
-import { Why } from "@/components/Why";
-import { useBoard } from "@/components/useBoard";
-import { WORDS } from "@/lib/labels";
+// The task line is the first sentence of demo-app/TASK.md, skipping the heading.
+async function readTask(): Promise<string> {
+  try {
+    const text = await readFile("demo-app/TASK.md", "utf8");
+    return text.split("\n").find((l) => l.trim() && !l.startsWith("#"))?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
 
-export default function Board() {
-  const b = useBoard();
-  const stopped = b.line?.stopped ?? false;
-  const middle = stopped ? WORDS.stopped : b.resumed ? WORDS.resumed : WORDS.running;
-  const note = stopped ? (b.line?.reason ?? null) : b.apiDown ? WORDS.down : null;
-  const selected = b.events.find((e) => e.id === b.selectedId) ?? null;
+// Written by scripts/eval.mjs. Missing until the eval has run once.
+async function readResults(): Promise<ScorecardResults | null> {
+  try {
+    return JSON.parse(await readFile("scorecard/results.json", "utf8")) as ScorecardResults;
+  } catch {
+    return null;
+  }
+}
 
+async function Loaded() {
+  const [task, results] = await Promise.all([readTask(), readResults()]);
+  return <Board task={task} results={results} />;
+}
+
+export default function Page() {
   return (
-    <main className="grid h-screen min-w-[1440px] grid-rows-[112px_112px_1fr] bg-steel-900 text-paper">
-      <StatusBar stopped={stopped} middle={middle} note={note} stats={b.stats} onResume={b.resume} />
-      <Line
-        events={b.events}
-        selectedId={b.selectedId}
-        stoppedId={stopped ? (b.line?.event_id ?? null) : null}
-        message={b.apiDown && b.events.length === 0 ? WORDS.down : null}
-        onSelect={b.setSelectedId}
-      />
-      <div className="grid min-h-0 grid-cols-2 border-t border-steel-600">
-        <Diff event={selected} diff={selected ? b.diff : null} />
-        <Why event={selected} />
-      </div>
-    </main>
+    <Suspense fallback={null}>
+      <Loaded />
+    </Suspense>
   );
 }
