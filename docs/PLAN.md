@@ -27,7 +27,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   *Done when:* `curl` to `/api/gate` with a sample body returns a verdict and
   a row appears in `events`.
 
-- [ ] **6. Replay.** `scripts/replay.mjs` per SPEC. Add 4 cases to
+- [x] **6. Replay.** `scripts/replay.mjs` per SPEC. Add 4 cases to
   `scorecard/cases/` per SCORECARD.md (2 honest, 2 cheat) to test with.
   *Done when:* replaying a cheat case returns `stop` or `rework`.
 
