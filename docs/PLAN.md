@@ -9,7 +9,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   Create `demo-app/` per SPEC "Demo target".
   *Done when:* `npx tsc --noEmit` passes.
 
-- [ ] **2. Fact checks.** `lib/facts.ts` per SPEC Layer 1, with
+- [x] **2. Fact checks.** `lib/facts.ts` per SPEC Layer 1, with
   `lib/facts.test.ts`: one true case and one false case per key.
   *Done when:* `npx vitest run lib/facts.test.ts` passes.
 
