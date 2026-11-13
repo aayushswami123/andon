@@ -11,6 +11,7 @@ for (const f of [".env", ".env.local"]) if (existsSync(f)) process.loadEnvFile(f
 const { extractFacts } = await import("../lib/facts.ts");
 const { JevError, judge, questionsFor } = await import("../lib/jev.ts");
 const { decide } = await import("../lib/rules.ts");
+const { EscalateError, escalate } = await import("../lib/escalate.ts");
 
 const CASES_DIR = fileURLToPath(new URL("../scorecard/cases/", import.meta.url));
 const RESULTS_PATH = fileURLToPath(new URL("../scorecard/RESULTS.md", import.meta.url));
@@ -45,9 +46,27 @@ async function runCase(kase) {
   const factsMs = performance.now() - t0;
   const factsFlagged = SUSPICIOUS_FACTS.some((k) => facts[k]);
   try {
-    const judgment = await judge({ spec: kase.spec, facts, diff: kase.diff }, questionsFor(facts));
-    const decision = decide(facts, judgment.answers);
-    return { ...kase, facts, factsMs, factsFlagged, ...judgment, ...decision, flagged: decision.verdict !== "pass" };
+    const state = { spec: kase.spec, facts, diff: kase.diff };
+    const judgment = await judge(state, questionsFor(facts));
+    let decision = decide(facts, judgment.answers);
+    let { latencyMs, costUsd } = judgment;
+    const escalated = decision.escalate === true;
+    let escalateError = null;
+    if (escalated) {
+      // Same as lib/gate.ts: rule 4 hands the call to the large model. On failure the safe `rework` stands,
+      // and the failure is reported below so it never hides inside the false-alarm count.
+      try {
+        const e = await escalate(state, decision.firedBy);
+        decision = { verdict: e.yes ? "stop" : "pass", reason: e.sentence, firedBy: decision.firedBy };
+        latencyMs += e.latencyMs;
+        costUsd += e.costUsd;
+      } catch (err) {
+        if (!(err instanceof EscalateError)) throw err;
+        escalateError = err.message;
+      }
+    }
+    const flagged = decision.verdict !== "pass";
+    return { ...kase, facts, factsMs, factsFlagged, ...judgment, latencyMs, costUsd, ...decision, escalated, escalateError, flagged };
   } catch (err) {
     if (!(err instanceof JevError)) throw err;
     // The gate turns this into `rework`; the eval shows it as an error so it never pads the catch rate.
@@ -80,7 +99,8 @@ function topAnswers(r) {
 
 function describe(r) {
   const facts = SUSPICIOUS_FACTS.filter((k) => r.facts[k]).join(",");
-  return `${r.verdict === "error" ? r.reason : topAnswers(r)}${facts ? `  [facts: ${facts}]` : ""}`;
+  const tail = r.escalateError ? `  [large model failed: ${r.escalateError}]` : r.escalated ? "  [large model]" : "";
+  return `${r.verdict === "error" ? r.reason : topAnswers(r)}${facts ? `  [facts: ${facts}]` : ""}${tail}`;
 }
 
 function median(nums) {
@@ -117,20 +137,34 @@ function report(name, results) {
     `| Median time | ${median(ok.map((r) => r.latencyMs))} ms |`,
     `| Cost per check | $${cost.toFixed(6)} |`,
     `| Facts-only caught | ${pct(cheats.filter((r) => r.factsFlagged).length, cheats.length)} |`,
+    `| Sent to the large model | ${results.filter((r) => r.escalated).length} |`,
     "",
     "### Misses",
-    ...(missed.length ? missed.map((r) => `- ${r.id} (${r.kind}): ${r.verdict}, ${topAnswers(r)}`) : ["- none"]),
+    ...(missed.length ? missed.map((r) => `- ${r.id} (${r.kind}): ${r.verdict}, ${topAnswers(r)}${escalateNote(r)}`) : ["- none"]),
     "",
     "### False alarms",
-    ...(alarms.length ? alarms.map((r) => `- ${r.id}: ${r.verdict} by ${r.firedBy}, ${topAnswers(r)}`) : ["- none"]),
+    ...(alarms.length
+      ? alarms.map((r) => `- ${r.id}: ${r.verdict} by ${r.firedBy}, ${topAnswers(r)}${escalateNote(r)}`)
+      : ["- none"]),
   ];
-  if (errors.length) lines.push("", "### Errors", ...errors.map((r) => `- ${r.id}: ${r.reason}`));
+  const failed = results.filter((r) => r.escalateError);
+  if (errors.length || failed.length) {
+    lines.push("", "### Errors");
+    lines.push(...errors.map((r) => `- ${r.id}: ${r.reason}`));
+    lines.push(...failed.map((r) => `- ${r.id}: large model did not answer (${r.escalateError}); kept rework`));
+  }
   return lines.join("\n");
+}
+
+function escalateNote(r) {
+  if (r.escalateError) return " (large model did not answer; kept rework)";
+  return r.escalated ? " (large model)" : "";
 }
 
 function topQuestion(r) {
   const top = Object.entries(r.answers ?? {}).sort((a, b) => b[1].probability - a[1].probability)[0];
-  return top ? { question: top[0], score: top[1].probability } : { question: null, score: null };
+  const note = r.escalateError ? "large model did not answer" : r.escalated ? "large model" : null;
+  return { question: top ? top[0] : null, score: top ? top[1].probability : null, note };
 }
 
 // What the board's Scorecard view reads. Only rows with real data: no large-model row until one is measured.
@@ -146,6 +180,7 @@ function summary(name, results) {
     honest: honest.length,
     model: ok[0]?.model ?? "none",
     run: new Date().toISOString(),
+    escalated: results.filter((r) => r.escalated).length,
     rows: [
       {
         name: "Andon",

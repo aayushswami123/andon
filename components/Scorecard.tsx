@@ -5,7 +5,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { QUESTION_LABEL, WORDS } from "./words";
 
 export type ScorecardRow = { name: string; caught: number; falseAlarms: number; medianMs: number; costUsd: number };
-export type ScorecardMiss = { id: string; kind: "missed" | "false alarm"; question: QuestionId | null; score: number | null };
+export type ScorecardMiss = {
+  id: string;
+  kind: "missed" | "false alarm";
+  question: QuestionId | null;
+  score: number | null;
+  note?: string | null;
+};
 export type ScorecardResults = {
   split: string;
   cases: number;
@@ -18,6 +24,7 @@ export type ScorecardResults = {
 type Props = { results: ScorecardResults | null; onOpenCase: (id: string) => void };
 
 function ms(n: number): string {
+  if (n < 1) return "under 1 ms";
   return n >= 1000 ? `${(n / 1000).toFixed(1)} s` : `${Math.round(n)} ms`;
 }
 
@@ -107,6 +114,7 @@ export function Scorecard({ results, onOpenCase }: Props) {
                     <span className={m.kind === "missed" ? "text-stop" : "text-rework-text"}>{m.kind}</span>
                     {m.question && <span className="text-graphite">“{QUESTION_LABEL[m.question]}”</span>}
                     {m.score !== null && <span className="font-semibold text-ink">{m.score.toFixed(2)}</span>}
+                    {m.note && <span className="text-graphite">{m.note}</span>}
                   </button>
                 </li>
               ))}

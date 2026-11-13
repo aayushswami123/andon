@@ -11,7 +11,7 @@ export const ESCALATE = {
 };
 
 // Board: how often it polls and how many lamp tiles stay on the line.
-export const BOARD = { pollMs: 1000, keepTiles: 24 };
+export const BOARD = { pollMs: 1000, keepTiles: 30 };
 
 // Decision model. Price is from docs.typesafe.ai/models: $0.042 per million input tokens, output free.
 // maxDiffChars keeps the state well under the 32k-token per-question limit and keeps calls fast.

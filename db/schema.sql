@@ -23,6 +23,8 @@ create table if not exists line (
   since    timestamptz
 );
 insert into line (id) values (1) on conflict (id) do nothing;
+-- What the human checked before resuming. Added after the first schema, so it is an alter.
+alter table line add column if not exists note text;
 
 -- Checks per minute by verdict (Tiger Data continuous aggregate). "with no data" lets it
 -- be created inside db-init's single transaction; materialized_only = false folds in the

@@ -78,6 +78,13 @@ export async function eventsAfter(afterId: number, limit: number): Promise<Event
     where id > ${afterId} order by id asc limit ${limit}`;
 }
 
+// The board's first load: the newest N in id order, so a long history never has to be paged through.
+export async function latestEvents(limit: number): Promise<EventRow[]> {
+  return sql()<EventRow[]>`
+    select * from (select ${sql().unsafe(EVENT_COLUMNS)} from events order by id desc limit ${limit}) newest
+    order by id asc`;
+}
+
 // Fetched on demand for the selected tile only, since diffs are left out of the polled list.
 export async function eventDiff(id: number): Promise<string | null> {
   const rows = await sql()<{ diff: string }[]>`select diff from events where id = ${id}`;
@@ -93,8 +100,9 @@ export async function stopLine(reason: string, eventId: number): Promise<void> {
   await sql()`update line set stopped = true, reason = ${reason}, event_id = ${eventId}, since = now() where id = 1`;
 }
 
-export async function resumeLine(): Promise<void> {
-  await sql()`update line set stopped = false, reason = null, event_id = null, since = null where id = 1`;
+// The note stays on the row after the stop clears, so the last resume is traceable.
+export async function resumeLine(note: string): Promise<void> {
+  await sql()`update line set stopped = false, reason = null, event_id = null, since = null, note = ${note} where id = 1`;
 }
 
 // Counts and cost roll up from the checks_per_minute continuous aggregate. The median

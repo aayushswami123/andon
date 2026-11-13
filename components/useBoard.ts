@@ -26,9 +26,11 @@ export function useBoard() {
     let alive = true;
     const tick = async () => {
       const last = eventsRef.current[eventsRef.current.length - 1];
+      // First load takes the newest tiles directly; after that, only what arrived since.
+      const query = last ? `after=${last.id}` : `last=${BOARD.keepTiles}`;
       try {
         const [ev, ln, st] = await Promise.all([
-          getJson<{ events: EventRow[] }>(`/api/events?after=${last?.id ?? 0}`),
+          getJson<{ events: EventRow[] }>(`/api/events?${query}`),
           getJson<LineRow>("/api/line"),
           getJson<Stats>("/api/stats"),
         ]);

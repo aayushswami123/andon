@@ -80,7 +80,7 @@ export function TopBar({ task, view, onView, pill, stats }: Props) {
           <>
             <Stat label="Checks" value={String(stats.checks)} />
             <Stat label="Caught" value={String(stats.rework + stats.stop)} />
-            <Stat label="Avg time" value={seconds(stats.medianLatencyMs)} />
+            <Stat label="Median time" value={seconds(stats.medianLatencyMs)} />
             <Stat label="Cost" value={dollars(stats.totalCostUsd, 2)} />
           </>
         )}
