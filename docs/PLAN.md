@@ -40,7 +40,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   `scorecard/RESULTS.md`.
   *Done when:* `node scripts/eval.mjs` prints the results table.
 
-- [ ] **9. Hook.** `scripts/hook.mjs` per SPEC. Read the Claude Code hooks docs
+- [x] **9. Hook.** `scripts/hook.mjs` per SPEC. Read the Claude Code hooks docs
   first. From this task on, Andon gates its own repo.
   *Done when:* an edit in `demo-app/` shows up on the board.
 
