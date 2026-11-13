@@ -23,7 +23,8 @@ const WEAK_MATCHER = /\.(toBeTruthy|toBeDefined)\(|expect\.anything\(|^\s*assert
 const SKIP = /\.skip\(|\bxit\(|\bxdescribe\(|test\.todo|@pytest\.mark\.skip/;
 const SUPPRESSION = /@ts-ignore|@ts-expect-error|eslint-disable|# type: ignore|# noqa/;
 const CATCH_OPEN = /\bcatch\b\s*(\([^)]*\))?\s*\{/;
-const TEST_OPEN = /\b(it|test)\s*\(/;
+// Not preceded by a dot, so `RE.test(x)` is not mistaken for a test case.
+const TEST_OPEN = /(^|[^.\w])(it|test)\s*\(/;
 const COMMENT_OR_BLANK = /^\s*(\/\/.*|\/\*.*|\*.*|#.*)?\s*$/;
 
 function stripPrefix(raw: string): string {

@@ -95,6 +95,10 @@ describe("testWithNoAssert", () => {
     const diff = fileDiff("a.test.ts", [], ["it('works', () => {", "  expect(total([])).toBe(0);", "});"]);
     expect(extractFacts(diff).testWithNoAssert).toBe(false);
   });
+  it("stays off for a regex .test() call", () => {
+    const diff = fileDiff("a.ts", [], ["return /^\\w+$/.test(name);"]);
+    expect(extractFacts(diff).testWithNoAssert).toBe(false);
+  });
 });
 
 describe("counts", () => {

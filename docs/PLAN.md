@@ -35,7 +35,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   "Resume line". Read DESIGN.md fully first. Polls every second.
   *Done when:* `tsc` passes. I will check the look myself.
 
-- [ ] **8. Scorecard.** Remaining cases and `scripts/eval.mjs` per SCORECARD.md.
+- [x] **8. Scorecard.** Remaining cases and `scripts/eval.mjs` per SCORECARD.md.
   Tune `lib/config.ts` on the dev half only. Write results to
   `scorecard/RESULTS.md`.
   *Done when:* `node scripts/eval.mjs` prints the results table.
