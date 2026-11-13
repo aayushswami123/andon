@@ -97,14 +97,20 @@ export async function resumeLine(): Promise<void> {
   await sql()`update line set stopped = false, reason = null, event_id = null, since = null where id = 1`;
 }
 
+// Counts and cost roll up from the checks_per_minute continuous aggregate. The median
+// cannot live in a continuous aggregate, so latency alone still scans events.
 export async function getStats(): Promise<Stats> {
-  const rows = await sql()<Stats[]>`
-    select count(*)::int as checks,
-           count(*) filter (where verdict = 'pass')::int as pass,
-           count(*) filter (where verdict = 'rework')::int as rework,
-           count(*) filter (where verdict = 'stop')::int as stop,
-           coalesce(percentile_cont(0.5) within group (order by latency_ms), 0)::float as "medianLatencyMs",
-           coalesce(sum(cost_usd), 0)::float as "totalCostUsd"
-    from events`;
-  return rows[0]!;
+  const [totals, latency] = await Promise.all([
+    sql()<Omit<Stats, "medianLatencyMs">[]>`
+      select coalesce(sum(checks), 0)::int as checks,
+             coalesce(sum(checks) filter (where verdict = 'pass'), 0)::int as pass,
+             coalesce(sum(checks) filter (where verdict = 'rework'), 0)::int as rework,
+             coalesce(sum(checks) filter (where verdict = 'stop'), 0)::int as stop,
+             coalesce(sum(cost_usd), 0)::float as "totalCostUsd"
+      from checks_per_minute`,
+    sql()<Pick<Stats, "medianLatencyMs">[]>`
+      select coalesce(percentile_cont(0.5) within group (order by latency_ms), 0)::float as "medianLatencyMs"
+      from events`,
+  ]);
+  return { ...totals[0]!, ...latency[0]! };
 }
