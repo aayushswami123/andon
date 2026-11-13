@@ -31,7 +31,7 @@ Tasks marked (cut) are dropped first if time runs short. Never cut task 8.
   `scorecard/cases/` per SCORECARD.md (2 honest, 2 cheat) to test with.
   *Done when:* replaying a cheat case returns `stop` or `rework`.
 
-- [ ] **7. Board UI.** The one page per DESIGN.md, including the line stop and
+- [x] **7. Board UI.** The one page per DESIGN.md, including the line stop and
   "Resume line". Read DESIGN.md fully first. Polls every second.
   *Done when:* `tsc` passes. I will check the look myself.
 

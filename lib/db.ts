@@ -77,6 +77,12 @@ export async function eventsAfter(afterId: number, limit: number): Promise<Event
     where id > ${afterId} order by id asc limit ${limit}`;
 }
 
+// Fetched on demand for the selected tile only, since diffs are left out of the polled list.
+export async function eventDiff(id: number): Promise<string | null> {
+  const rows = await sql()<{ diff: string }[]>`select diff from events where id = ${id}`;
+  return rows[0]?.diff ?? null;
+}
+
 export async function getLine(): Promise<LineRow> {
   const rows = await sql()<LineRow[]>`select stopped, reason, event_id::int as event_id, since from line where id = 1`;
   return rows[0] ?? { stopped: false, reason: null, event_id: null, since: null };
